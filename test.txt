@@ -1,0 +1,171 @@
+# 🧠 JARVIS v2 — Self-Evolving AI Telegram Bot
+
+## 🔰 OVERVIEW
+
+**JARVIS v2** is a **self-evolving AI Telegram bot** that operates entirely inside Telegram using:
+
+* Natural language prompts
+* Role-based access control
+* Auto-code generation via Gemini (or other LLM)
+* Secure file edits and memory tracking
+* A modular plugin system with command auto-registration
+
+JARVIS can:
+
+* Build bots or features using plain prompts
+* Modify its own source code dynamically
+* Respond intelligently to text, files, or captioned inputs
+* Enforce developer-only access for sensitive operations
+
+---
+
+## 💬 CONVERSATIONAL BEHAVIOR
+
+| Context             | Behavior                                                   |
+| ------------------- | ---------------------------------------------------------- |
+| **DM Chat**         | Accepts any text as AI prompt (no `/` needed)              |
+| **Group Chat**      | Listens only to messages containing the keyword `"jarvis"` |
+| **Command Support** | `/start`, `/help`, `/info` always available                |
+
+---
+
+## 📦 FEATURES & CAPABILITIES
+
+### ✅ AI FEATURES (via Gemini or GPT)
+
+* Full prompt understanding for creating:
+
+  * Bots
+  * Games
+  * Command handlers
+  * Utility features
+* Converts plans into working Python modules
+* Generates responses as JSON with file paths + contents
+* Supports dynamic command registration in `main.py`
+
+### 🧠 FILE INPUT MODES
+
+* **`.txt` file only** → AI reads and responds:
+  *“I understood the project. Starting build…”*
+* **File + caption** → AI uses caption as task instruction, file as context
+* AI will not output code in chat — it directly edits files unless told otherwise
+
+---
+
+## 🧩 ADVANCED INTERNAL SYSTEMS
+
+### 🔁 Auto File Management
+
+* Automatically creates/edits/deletes files & folders
+* Writes only inside its own project directory
+* Backup created for every file before change
+
+### 🧠 Memory System
+
+* Stores recent tasks/requests in `memory.json`
+* Can be viewed via `/memory`
+* Cleared with `/clearmemory` (dev-only)
+
+### 🧠 Diff/Undo System
+
+* Every modified file saved as `.bak` before change
+* `/diff <file>` → shows difference between current and backup
+* `/undo <file>` → restores from `.bak`
+
+### 🔌 Plugin System
+
+* Feature modules live inside `features/`
+* Auto-registered if file contains `register_handlers(dp)`
+* Enable/disable dynamically with:
+
+  * `/enable <feature_name>`
+  * `/disable <feature_name>`
+
+---
+
+## 🔐 ACCESS & SECURITY
+
+| Role       | Description                                             |
+| ---------- | ------------------------------------------------------- |
+| **Owner**  | Set via `OWNER_ID` in `.env`                            |
+| **Devs**   | Can be added/removed via `/adddev` and `/removedev`     |
+| **Public** | Access controlled via `/access dev` or `/access public` |
+
+* Sensitive commands (AI, edit, memory, undo, diff, etc.) restricted to devs only in `dev` mode
+
+---
+
+## 🔧 SYSTEM COMMANDS
+
+| Command           | Purpose                               |
+| ----------------- | ------------------------------------- |
+| `/start`          | Sends welcome message                 |
+| `/help`           | Shows help menu                       |
+| `/info`           | Shows bot status and personality      |
+| `/access`         | Toggle access: dev/public             |
+| `/adddev <id>`    | Add developer (owner only)            |
+| `/removedev <id>` | Remove developer                      |
+| `/memory`         | View memory                           |
+| `/clearmemory`    | Clear memory (dev-only)               |
+| `/tree`           | Visualize bot folder structure        |
+| `/diff <file>`    | See what changed                      |
+| `/undo <file>`    | Revert last AI edit                   |
+| `/log`            | View AI activity logs                 |
+| `/command <name>` | Trigger feature generation (internal) |
+| `/review <file>`  | Run AI-powered code review            |
+| `/enable <name>`  | Enable a plugin                       |
+| `/disable <name>` | Disable a plugin                      |
+
+---
+
+## 🧠 AI RESPONSE FORMAT (TO BE USED BY GEMINI/GPT)
+
+The AI must return output as a **pure JSON object** with this format:
+
+```json
+{
+  "files": {
+    "main.py": "....",
+    "features/mines_game/handler.py": "...",
+    "db/mines_game.json": "{}"
+  }
+}
+```
+
+No extra explanation, Markdown, or chat formatting is allowed in actual AI response.
+
+---
+
+## 📁 FOLDER STRUCTURE (Core)
+
+```
+jarvis_bot/
+├── features/               # Modular feature plugins
+├── bots/                   # Sub-bots (on demand)
+├── db/                     # JSON databases for features
+├── logs/                   # AI logs, memory logs
+├── uploads/                # Temporary files
+├── config/
+│   └── settings.json       # Devs, access mode, personality
+├── .env                    # API_TOKEN, GEMINI_API_KEY, OWNER_ID
+├── main.py                 # Dispatcher + plugin loader
+├── jarvis_engine.py        # Gemini API + JSON interpreter
+├── file_manager.py         # Diff, undo, safe writes
+├── error_handler.py        # Error fallback + logging
+├── requirements.txt
+```
+
+---
+
+## ✅ GOAL
+
+JARVIS v2 is a **self-improving Telegram bot assistant** that:
+
+* Understands natural instructions
+* Can read files and plans
+* Dynamically creates features, bots, handlers, games
+* Safely edits its own source code
+* Allows secure multi-dev access
+* Logs, remembers, and undoes its own changes
+
+
