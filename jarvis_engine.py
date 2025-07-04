@@ -6,10 +6,13 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+from dotenv import load_dotenv
+load_dotenv()
+
 class JarvisEngine:
     def __init__(self):
         self.gemini_api_key = os.getenv('GEMINI_API_KEY')
-        self.api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+        self.api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
         self.system_prompt = self.load_system_prompt()
 
     def load_system_prompt(self):

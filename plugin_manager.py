@@ -124,6 +124,23 @@ class PluginManager:
         except Exception as e:
             logger.error(f"Error unloading plugin {plugin_name}: {e}")
             return False
+        
+    def load_plugins(self, application: Application) -> int:
+        """Load all enabled plugins from config/settings.json"""
+        count = 0
+        enabled_list = self.plugins_config.get('enabled_plugins', [])
+        plugins_dir = Path("plugins")
+
+        for plugin_name in enabled_list:
+            plugin_path = plugins_dir / f"{plugin_name}.py"
+            if plugin_path.exists():
+                if self.load_plugin(plugin_name, application):
+                    count += 1
+            else:
+                logger.warning(f"Plugin '{plugin_name}' not found in plugins/")
+        
+        return count
+
     
     def enable_plugin(self, plugin_name: str, application: Application) -> bool:
         """Enable a plugin"""

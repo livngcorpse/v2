@@ -1,6 +1,7 @@
 {
-  "devs": [123456789],
+  "devs": [7690516986],
   "access_mode": "dev",
   "personality": "JARVIS v2 - Self-Evolving AI Assistant",
-  "enabled_features": []
+  "enabled_features": [],
+  "disabled_features": []
 }

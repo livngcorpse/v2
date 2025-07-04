@@ -276,3 +276,7 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error restoring database {db_name}: {e}")
             return False
+        
+    def initialize(self):
+        """Optional startup hook to prepare or validate DB files"""
+        logger.info("✅ DatabaseManager initialized — no setup required.")
