@@ -1,182 +1,205 @@
 # 🧠 JARVIS v2 — Self-Evolving AI Telegram Bot
 
-## 🚀 Quick Setup
+> An intelligent, self-evolving AI-powered Telegram assistant built with Python, Gemini/GPT, and modular plugin support.
 
-1. **Clone and Install**:
-   ```bash
-   git clone <your-repo>
-   cd jarvis_bot
-   pip install -r requirements.txt
-   ```
+---
 
-2. **Configure Environment**:
-   - Copy `.env.example` to `.env`
-   - Add your Telegram Bot Token (`API_TOKEN`)
-   - Add your Gemini API Key (`GEMINI_API_KEY`)
-   - Add your Telegram User ID (`OWNER_ID`)
+## 🔰 Overview
 
-3. **Run**:
-   ```bash
-   python main.py
-   ```
+**JARVIS v2** is a modular, AI-powered Telegram bot that:
 
-## 🔑 Environment Variables
+- Understands natural language prompts
+- Dynamically edits or generates code and features
+- Uses plugins and file-based features
+- Tracks memory and supports file diffs, undo, and logging
+- Offers fine-grained access control for dev-only operations
+
+It runs entirely inside Telegram, processing messages, files, and commands.
+
+---
+
+## 🛠️ Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/youruser/jarvis_bot.git
+cd jarvis_bot
+````
+
+### 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Create Environment File
+
+Copy `.env.example` to `.env` and fill in your details:
 
 ```env
-API_TOKEN=your_telegram_bot_token_here
-GEMINI_API_KEY=your_gemini_api_key_here
-OWNER_ID=your_telegram_user_id_here
+API_TOKEN=your_telegram_bot_token
+GEMINI_API_KEY=your_gemini_api_key
+OWNER_ID=your_telegram_user_id
 ```
 
-## 💬 Usage
+### 4. Run the Bot
 
-### DM Chat
-- Send any text directly to get AI responses
-- No `/` prefix needed
+```bash
+python main.py
+```
+
+---
+
+## 💬 How to Use
+
+### Private Chat
+
+* Send **any message** (no `/`) to trigger AI processing
 
 ### Group Chat
-- Include "jarvis" in your message
-- Example: "Hey jarvis, create a calculator bot"
 
-### File Processing
-- Send `.txt` file only → AI reads and builds
-- Send file + caption → AI uses caption as instruction
+* Mention `jarvis` in your message to activate the bot
 
-## 🎯 Core Commands
+### File Uploads
 
-| Command | Description | Access |
-|---------|-------------|---------|
-| `/start` | Welcome message | All |
-| `/help` | Show help | All |
-| `/info` | Bot status | All |
-| `/access dev\|public` | Toggle access mode | Dev |
-| `/adddev <id>` | Add developer | Owner |
-| `/removedev <id>` | Remove developer | Owner |
-| `/memory` | View recent tasks | All |
-| `/clearmemory` | Clear memory | Dev |
-| `/tree` | Show folder structure | All |
-| `/diff <file>` | Show file changes | Dev |
-| `/undo <file>` | Revert file changes | Dev |
-| `/log` | View AI activity | Dev |
-| `/enable <feature>` | Enable plugin | Dev |
-| `/disable <feature>` | Disable plugin | Dev |
-| `/review <file>` | AI code review | Dev |
+* Upload a `.txt` file only → AI reads and begins building
+* Upload with a caption → Caption is treated as instruction, file as context
 
-## 🏗️ Architecture
+---
 
-```
-jarvis_bot/
-├── features/           # Plugin modules
-│   └── example/
-│       └── handler.py
-├── bots/              # Generated sub-bots
-├── db/                # JSON databases
-├── logs/              # Activity & error logs
-├── uploads/           # Temporary files
-├── config/
-│   └── settings.json  # Bot configuration
-├── main.py            # Core bot logic
-├── jarvis_engine.py   # AI processing
-├── file_manager.py    # File operations
-└── error_handler.py   # Error management
-```
+## 📦 Features
 
-## 🔌 Creating Features
+### ✅ AI Capabilities
 
-Create new features in `features/<name>/handler.py`:
+* Converts prompts into working bots, games, handlers, utilities
+* Uses Gemini or GPT to generate JSON with file paths + content
+* Automatically writes files into the project directory
+* Supports AI code reviews with `/review`
 
-```python
-from telegram.ext import CommandHandler
+### 🧠 Memory System
 
-def register_handlers(dp):
-    dp.add_handler(CommandHandler("mycommand", my_handler))
+* Logs every AI task to `logs/memory.json`
+* View with `/memory`
+* Clear with `/clearmemory`
 
-async def my_handler(update, context):
-    await update.message.reply_text("Feature working!")
-```
+### 🧩 Plugin & Feature Loader
 
-## 🛡️ Security
+* Plugin modules live in `plugins/`
+* Legacy file-based features in `features/`
+* Auto-discovered and registered
+* Enable/disable plugins dynamically via commands
 
-- **Owner**: Full access (set via `OWNER_ID`)
-- **Developers**: Can be added/removed by owner
-- **Access Modes**:
-  - `dev`: Only developers can use AI features
-  - `public`: Anyone can use basic features
+### 📁 File Management
 
-## 🤖 AI Capabilities
+* `.bak` backups created before file edits
+* Use `/diff <file>` to see changes
+* Use `/undo <file>` to revert last edit
 
-JARVIS can create:
-- Complete Telegram bots
-- Games and interactive features
-- Command handlers
-- Database systems
-- Utility tools
-- Feature plugins
+---
 
-## 📝 AI Response Format
+## 🔐 Access Control
 
-For file operations, AI returns:
+| Role          | Rights                                                  |
+| ------------- | ------------------------------------------------------- |
+| **Owner**     | Set via `OWNER_ID`; can add/remove devs                 |
+| **Developer** | Granted access via `/adddev`; can use dev-only commands |
+| **Public**    | Controlled via `/access dev` or `/access public`        |
+
+---
+
+## 🔧 Commands
+
+| Command               | Description                   | Access     |
+| --------------------- | ----------------------------- | ---------- |
+| `/start`              | Welcome message               | All        |
+| `/help`               | Show all commands             | All        |
+| `/info`               | Show status & plugin info     | All        |
+| `/access dev\|public` | Toggle access mode            | Dev        |
+| `/adddev <id>`        | Add developer                 | Owner only |
+| `/removedev <id>`     | Remove developer              | Owner only |
+| `/memory`             | View recent memory entries    | All        |
+| `/clearmemory`        | Clear memory history          | Dev        |
+| `/tree`               | View bot folder structure     | All        |
+| `/diff <file>`        | Show file diff                | Dev        |
+| `/undo <file>`        | Undo file to last state       | Dev        |
+| `/log`                | View recent AI logs           | Dev        |
+| `/enable <plugin>`    | Enable plugin                 | Dev        |
+| `/disable <plugin>`   | Disable plugin                | Dev        |
+| `/plugins`            | List all plugins              | Dev        |
+| `/features`           | List legacy features          | Dev        |
+| `/loadfeatures`       | Manually load legacy features | Dev        |
+| `/review <file>`      | Run AI-powered code review    | Dev        |
+
+---
+
+## 🧠 AI Response Format
+
+The bot expects LLMs (e.g. Gemini/GPT) to return responses like:
+
 ```json
 {
   "files": {
-    "path/to/file.py": "file content",
+    "main.py": "...",
+    "features/my_plugin/handler.py": "...",
     "db/data.json": "{}"
   }
 }
 ```
 
-## 🔧 Advanced Features
-
-### Memory System
-- Tracks recent AI tasks
-- Viewable with `/memory`
-- Clearable with `/clearmemory`
-
-### File Management
-- Auto-backup before changes
-- Diff viewing with `/diff`
-- Rollback with `/undo`
-
-### Plugin System
-- Auto-discovery of features
-- Enable/disable dynamically
-- Modular architecture
-
-### Error Handling
-- Comprehensive logging
-- Graceful failure recovery
-- Debug information
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-1. **Bot not responding**:
-   - Check API_TOKEN in `.env`
-   - Verify bot is started with BotFather
-
-2. **AI not working**:
-   - Check GEMINI_API_KEY in `.env`
-   - Verify API key has proper permissions
-
-3. **Permission denied**:
-   - Check OWNER_ID matches your Telegram ID
-   - Use `/adddev` to add developers
-
-4. **File operations failing**:
-   - Check file permissions
-   - Ensure proper directory structure
-
-### Getting Help
-
-- Check logs in `logs/` directory
-- Use `/log` command for recent activity
-- Review memory with `/memory`
-
-## 📄 License
-
-This project is open source. Modify and distribute as needed.
+**No Markdown or chat formatting. Just JSON.**
 
 ---
 
-**JARVIS v2** - Built with ❤️ for the AI community
+## 🧱 Project Structure
+
+```
+jarvis_bot/
+├── features/               # Legacy plugin handlers
+├── plugins/                # Modern plugin modules
+├── bots/                   # Generated bot modules
+├── db/                     # Local JSON DBs
+├── logs/                   # Activity & memory logs
+├── uploads/                # Uploaded user files
+├── config/
+│   └── settings.json       # Persistent config (access mode, devs, etc.)
+├── .env                    # API keys and secrets
+├── main.py                 # Bot entrypoint
+├── jarvis_engine.py        # AI handler
+├── plugin_manager.py       # Plugin controller
+├── file_manager.py         # Diff, undo, write
+├── db_manager.py           # Storage logic
+├── error_handler.py        # Logging + fallbacks
+├── requirements.txt
+```
+
+---
+
+## 📖 Advanced Features
+
+* ✅ Modular plugin system (`/enable`, `/disable`, `/plugins`)
+* ✅ Dynamic file editing with backups
+* ✅ Error logging and graceful handling
+* ✅ Memory, review, and rollback capabilities
+* ✅ Gemini or GPT powered AI engine
+
+---
+
+## 📌 Tips
+
+* Use **`/access public`** to let others test
+* Use **`/memory`** and **`/log`** to debug AI behavior
+* Always add a caption when uploading `.txt` files for precise results
+* Use **inline keyboards** to navigate menus (optional via `/start`)
+
+---
+
+## 📝 License
+
+Open-source and developer friendly. Modify and extend freely.
+
+---
+
+**JARVIS v2** — Your AI-powered assistant, evolving with every message.
+
+```
