@@ -441,4 +441,31 @@ def register_commands(bot):
             await message.reply("✅ Auto-fix applied! Run /check to verify.")
         else:
             await message.reply("❌ Auto-fix failed or no fixes available")
+
+        @bot.on_message(filters.regex(r"(?i)^fix it$") & filters.private)
+        async def handle_fix_it(client, message):
+            from modules.regression_checker import regression_checker
+            from memory.memory_manager import get_pending_tasks
+    
+            tasks = get_pending_tasks(message.from_user.id)
+            if not tasks:
+                return await message.reply("⚠️ No recent task found to fix.")
+    
+            latest = tasks[-1]
+            errors = latest.get("errors", [])
+    
+            if not errors:
+                return await message.reply("✅ No fixable errors found in last task.")
+    
+            fixed_files = []
+            for error in errors:
+                file_path = error.get("file")
+                if file_path and regression_checker.auto_fix(file_path):
+                    fixed_files.append(file_path)
+    
+            if fixed_files:
+                await message.reply("🛠 Auto-fix applied to:\n" + "\n".join(f"• {f}" for f in fixed_files))
+            else:
+                await message.reply("❌ Auto-fix failed or not applicable.")
+
             
