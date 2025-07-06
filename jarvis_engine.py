@@ -70,6 +70,20 @@ class JarvisEngine:
             logger.error(f"Code generation error: {e}")
             return {"error": str(e), "files": {}}
     
+    def generate_module_code(self, description: str, previous_error: str = None) -> str:
+        """Generate module code and return as string (legacy compatibility)"""
+        
+        prompt = f"Write a full Pyrogram Telegram bot module that implements: {description}..."
+        if previous_error:
+            prompt += f"\n\nPrevious error: {previous_error}"
+        
+        try:
+            response = self.model.generate_content(prompt)
+            return clean_code_blocks(response.text.strip())
+        except Exception as e:
+            logger.error(f"Module generation error: {e}")
+            return f"# Error generating module: {e}"
+    
     def generate_conversation_response(self, user_message: str, chat_history: list = None) -> str:
         """Generate natural conversation response"""
         
@@ -88,7 +102,7 @@ class JarvisEngine:
         """
         
         if chat_history:
-            history_text = "\n".join([f"User: {msg['user']}\nJARVIS: {msg['assistant']}" for msg in chat_history[-5:]])
+            history_text = "\n".join([f"User: {msg.get('content', '')}" for msg in chat_history[-5:] if msg.get('role') == 'user'])
             prompt += f"\n\nRecent conversation:\n{history_text}"
         
         try:
