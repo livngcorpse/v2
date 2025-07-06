@@ -45,3 +45,8 @@ def revert_task(task_id):
         if not restored:
             return False, f"Backup not found for {file}"
     return True, "Task reverted."
+
+def get_pending_tasks(user_id):
+    """Get pending tasks for a user"""
+    tasks = load_tasks()
+    return [task for task in tasks if task.get("user_id") == user_id and task.get("status") == "sandboxed"]
