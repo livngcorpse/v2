@@ -5,8 +5,20 @@ import os
 from core.task_manager import diff_file, restore_file
 from memory.memory_manager import revert_task
 import json
+import sys
 
 def register_commands(bot):
+
+    @bot.on_message(filters.command("reload") & filters.private)
+    async def reload_bot_command(client, message):
+        if not is_owner(message.from_user.id):
+            return await message.reply("❌ Owner only.")
+
+        await message.reply("🔁 Restarting bot...")
+
+        import sys
+        import os
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
     @bot.on_message(filters.command("modules") & filters.private)
     async def list_modules(client, message):
@@ -376,12 +388,4 @@ def register_commands(bot):
         from memory.conversation_manager import save_chat_memory
         save_chat_memory(message.from_user.id, [])
         await message.reply("✅ Chat history cleared!")
-
-def get_current_mode():
-    """Get current automation mode"""
-    try:
-        with open("config/settings.json", "r") as f:
-            settings = json.load(f)
-        return settings.get("mode", "manual")
-    except:
-        return "manual"
+        
