@@ -46,6 +46,7 @@ async def handle_message(client, message):
 
 async def handle_create_intent(client, message, user_text):
     await message.reply("🔧 Generating code...")
+    
     result = jarvis_engine.generate_code(user_text, task_type="CREATE")
 
     if "error" in result:
@@ -53,11 +54,21 @@ async def handle_create_intent(client, message, user_text):
         return
 
     task_info = sandbox_manager.create_sandbox_files(result, message.from_user.id)
+
     if task_info["errors"]:
-        error_msg = "\n".join([f"• {e.get('message', str(e))}" for e in task_info["errors"]])
+        error_msg = "\n".join(
+            [f"• {e.get('message', e.get('lint_errors', 'Unknown issue'))}" for e in task_info["errors"]]
+        )
+
         await message.reply(f"⚠️ Generated with issues:\n{error_msg}")
+        
+        # Suggest possible next action
+        await message.reply("🔧 Say 'fix it' to attempt auto-corrections.")
     else:
-        await message.reply(f"✅ Code generated! Task ID: {task_info['id']}\nSay 'integrate it' to move to plugins.")
+        await message.reply(
+            f"✅ Code generated successfully!\n🆔 Task ID: {task_info['id']}\nSay 'integrate it' to move to plugins."
+        )
+
 
 
 async def handle_edit_intent(client, message, user_text):
