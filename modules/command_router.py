@@ -195,3 +195,62 @@ def register_commands(bot):
             json.dump(settings, f, indent=2)
         
         await message.reply(f"✅ Access mode set to: {mode}")
+
+    @bot.on_message(filters.command("start") & filters.private)
+    async def start_command(client, message):
+        await message.reply("🤖 **JARVIS Bot** - AI Assistant\n\nSend me natural language requests to build features, ask questions, or chat!")
+
+    @bot.on_message(filters.command("help") & filters.private)
+    async def help_command(client, message):
+        user_id = message.from_user.id
+        if is_dev(user_id):
+            help_text = """
+🔧 **Developer Commands:**
+/start - Welcome message
+/help - Show this help
+/info - Bot status
+/memory - Show recent AI tasks
+/diff <file> - Show file changes
+/undo <file> - Restore file backup
+/clearmemory - Clear task memory
+/plugins - List all plugins
+/access dev/public - Set access mode
+/adddev <id> - Add developer
+/removedev <id> - Remove developer
+/clearhistory - Clear chat memory
+            """
+        else:
+            help_text = """
+💬 **Available Commands:**
+/start - Welcome message
+/help - Show this help
+/info - Bot information
+/clearhistory - Clear chat history
+            """
+        await message.reply(help_text)
+
+    @bot.on_message(filters.command("info") & filters.private)
+    async def info_command(client, message):
+        from core.role_manager import is_owner, access_mode
+        from memory.memory_manager import get_pending_tasks
+
+        user_id = message.from_user.id
+        role = "Owner" if is_owner(user_id) else "Developer" if is_dev(user_id) else "Public"
+        mode = access_mode()
+
+        plugin_count = len([f for f in os.listdir("plugins") if os.path.isdir(os.path.join("plugins", f))]) if os.path.exists("plugins") else 0
+
+        info_text = f"""
+🤖 **JARVIS Bot Status**
+👤 Your Role: {role}
+🔒 Access Mode: {mode}
+🔌 Plugins: {plugin_count}
+📁 Sandbox Tasks: {len(get_pending_tasks(user_id))}
+        """
+        await message.reply(info_text)
+
+    @bot.on_message(filters.command("clearhistory") & filters.private)
+    async def clear_history_command(client, message):
+        from memory.conversation_manager import save_chat_memory
+        save_chat_memory(message.from_user.id, [])
+        await message.reply("✅ Chat history cleared!")
