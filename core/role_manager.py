@@ -17,3 +17,7 @@ def is_dev(user_id):
 
 def access_mode():
     return settings["access"]
+
+def get_current_mode():
+    """Get current automation mode (manual or auto)"""
+    return settings.get("mode", "manual")
