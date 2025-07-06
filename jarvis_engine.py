@@ -25,10 +25,10 @@ class JarvisEngine:
         
         base_prompt = f"""
         You are JARVIS, an AI that generates Pyrogram Telegram bot modules.
-        
+    
         Task: {description}
         Type: {task_type}
-        
+    
         CRITICAL RULES:
         1. Output ONLY valid JSON in this exact format:
         {{
@@ -37,38 +37,57 @@ class JarvisEngine:
             "sandbox/module_name/utils.py": "python_code_here_if_needed"
           }}
         }}
-        
+    
         2. NO markdown formatting, NO explanations, NO examples
         3. Code must be complete and working Pyrogram handlers
         4. Use register_handlers(app, bot) function to register commands
         5. Import required modules at top of file
-        
         """
         
         if previous_error:
             base_prompt += f"\n\nPrevious error to fix: {previous_error}"
-            
+        
         if task_type == "EDIT":
             base_prompt += "\n\nThis is an edit request. Modify existing code accordingly."
         elif task_type == "RECODE":
             base_prompt += "\n\nThis is a complete recode request. Rewrite from scratch."
-            
+        
         try:
             response = self.model.generate_content(base_prompt)
             response_text = response.text.strip()
-            
+    
             # Clean and parse JSON response
             cleaned_response = self._clean_json_response(response_text)
             result = json.loads(cleaned_response)
-            
+    
             # Log AI activity
             self._log_ai_activity(description, response_text, task_type)
-            
+    
+            # Run quality checks on each generated file
+            if "files" in result:
+                result["quality_issues"] = {}  # Store issues file-wise
+                for file_path, content in result["files"].items():
+                    # Save as temporary file for checking
+                    temp_file = f"temp_{file_path.replace('/', '_')}"
+                    with open(temp_file, 'w', encoding='utf-8') as f:
+                        f.write(content)
+    
+                    check_result = regression_checker.comprehensive_check(temp_file)
+                    if not check_result.passed:
+                        result["quality_issues"][file_path] = {
+                            "score": check_result.score,
+                            "errors": check_result.errors,
+                            "warnings": check_result.warnings
+                        }
+    
+                    os.remove(temp_file)  # Clean up
+    
             return result
-            
+    
         except Exception as e:
             logger.error(f"Code generation error: {e}")
             return {"error": str(e), "files": {}}
+
     
     def generate_module_code(self, description: str, previous_error: str = None) -> str:
         """Generate module code and return as string (legacy compatibility)"""
