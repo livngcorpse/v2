@@ -1,43 +1,6 @@
-import os
-from dotenv import load_dotenv
-import json
-
-load_dotenv()
-
-# Telegram Bot Configuration
-API_ID = int(os.getenv("API_ID"))
-API_HASH = os.getenv("API_HASH") 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
-# Load settings from JSON
-def load_settings():
-    with open("config/settings.json") as f:
-        return json.load(f)
-
-def save_settings(settings):
-    with open("config/settings.json", "w") as f:
-        json.dump(settings, f, indent=2)
-
-settings = load_settings()
-
-# Bot Settings
-OWNER_ID = settings["owner_id"]
-DEVS = settings["devs"]
-ACCESS_MODE = settings["access"]
-BOT_MODE = settings.get("mode", "manual")
-
-# Logging Configuration
-LOG_CHANNEL = os.getenv("LOG_CHANNEL")
-TASK_CHANNEL = os.getenv("TASK_CHANNEL")
-
-# Directory Paths
-SANDBOX_DIR = "sandbox"
-PLUGINS_DIR = "plugins"
-LOGS_DIR = "logs"
-UPLOADS_DIR = "uploads"
-DB_DIR = "db"
-
-# Ensure directories exist
-for directory in [SANDBOX_DIR, PLUGINS_DIR, LOGS_DIR, UPLOADS_DIR, DB_DIR]:
-    os.makedirs(directory, exist_ok=True)
+{
+  "owner_id": 123456789,
+  "devs": [123456789],
+  "access": "public",
+  "mode": "manual"
+}
