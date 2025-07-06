@@ -1,6 +1,6 @@
 from pyrogram import filters
 from pyrogram.enums import ParseMode
-from core.role_manager import is_owner, is_dev, access_mode
+from core.role_manager import is_owner, is_dev, access_mode. get_current_mode
 import os
 from core.task_manager import diff_file, restore_file
 from memory.memory_manager import revert_task
@@ -178,24 +178,20 @@ def register_commands(bot):
         # Note: Pyrogram doesn't have built-in handler removal
         # This is a simplified implementation
         await message.reply(f"⚠️ Plugin '{plugin_name}' disable requested. Note: Requires bot restart for full effect.")
-
+        
     @bot.on_message(filters.command("mode") & filters.private)
     async def mode_command(client, message):
         if not is_dev(message.from_user.id):
             return await message.reply("❌ Access denied.")
         
         if len(message.command) < 2:
-            # Show current mode
             current_mode = get_current_mode()
-            await message.reply(f"Current mode: {current_mode}")
-            return
+            return await message.reply(f"⚙️ Current mode: `{current_mode}`", parse_mode="markdown")
         
         mode = message.command[1].lower()
         if mode not in ["auto", "manual"]:
-            await message.reply("Usage: /mode <auto|manual>")
-            return
+            return await message.reply("Usage: /mode <auto|manual>")
         
-        # Save mode to settings
         try:
             with open("config/settings.json", "r") as f:
                 settings = json.load(f)
@@ -205,10 +201,10 @@ def register_commands(bot):
             with open("config/settings.json", "w") as f:
                 json.dump(settings, f, indent=2)
             
-            await message.reply(f"✅ Mode set to: {mode}")
-            
+            await message.reply(f"✅ Mode updated to: `{mode}`", parse_mode="markdown")
+        
         except Exception as e:
-            await message.reply(f"❌ Error setting mode: {e}")
+            await message.reply(f"❌ Error: {e}")
 
     @bot.on_message(filters.command("tree") & filters.private)
     async def tree_command(client, message):
