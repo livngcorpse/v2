@@ -4,7 +4,7 @@ from core.role_manager import set_bot_instance, is_dev
 from modules.command_router import register_commands
 from modules.plugin_loader import load_plugins
 from core.intent_classifier import intent_classifier
-from jarvis_engine import jarvis_engine
+from jarvis_engine import jarvis_engine  # Updated import
 from core.sandbox_manager import sandbox_manager
 from memory.access_control import has_access
 from memory.memory_manager import get_pending_tasks
@@ -30,6 +30,10 @@ async def handle_message(client, message):
 
     if intent == "CREATE":
         await handle_create_intent(client, message, user_text)
+    elif intent == "EDIT":
+        await handle_edit_intent(client, message, user_text)
+    elif intent == "RECODE":
+        await handle_recode_intent(client, message, user_text)
     elif intent == "INTEGRATE":
         await handle_integrate_intent(client, message, metadata)
     elif intent in ("CONVERSATION", "QUESTION"):
@@ -42,7 +46,7 @@ async def handle_message(client, message):
 
 async def handle_create_intent(client, message, user_text):
     await message.reply("🔧 Generating code...")
-    result = jarvis_engine.generate_code(user_text)
+    result = jarvis_engine.generate_code(user_text, task_type="CREATE")
 
     if "error" in result:
         await message.reply(f"❌ Error: {result['error']}")
@@ -50,9 +54,42 @@ async def handle_create_intent(client, message, user_text):
 
     task_info = sandbox_manager.create_sandbox_files(result, message.from_user.id)
     if task_info["errors"]:
-        await message.reply("⚠️ Generated with issues:\n" + "\n".join(f"• {e}" for e in task_info["errors"]))
+        error_msg = "\n".join([f"• {e.get('message', str(e))}" for e in task_info["errors"]])
+        await message.reply(f"⚠️ Generated with issues:\n{error_msg}")
     else:
         await message.reply(f"✅ Code generated! Task ID: {task_info['id']}\nSay 'integrate it' to move to plugins.")
+
+
+async def handle_edit_intent(client, message, user_text):
+    await message.reply("🔧 Editing code...")
+    result = jarvis_engine.generate_code(user_text, task_type="EDIT")
+
+    if "error" in result:
+        await message.reply(f"❌ Error: {result['error']}")
+        return
+
+    task_info = sandbox_manager.create_sandbox_files(result, message.from_user.id)
+    if task_info["errors"]:
+        error_msg = "\n".join([f"• {e.get('message', str(e))}" for e in task_info["errors"]])
+        await message.reply(f"⚠️ Edited with issues:\n{error_msg}")
+    else:
+        await message.reply(f"✅ Code edited! Task ID: {task_info['id']}\nSay 'integrate it' to move to plugins.")
+
+
+async def handle_recode_intent(client, message, user_text):
+    await message.reply("🔧 Recoding from scratch...")
+    result = jarvis_engine.generate_code(user_text, task_type="RECODE")
+
+    if "error" in result:
+        await message.reply(f"❌ Error: {result['error']}")
+        return
+
+    task_info = sandbox_manager.create_sandbox_files(result, message.from_user.id)
+    if task_info["errors"]:
+        error_msg = "\n".join([f"• {e.get('message', str(e))}" for e in task_info["errors"]])
+        await message.reply(f"⚠️ Recoded with issues:\n{error_msg}")
+    else:
+        await message.reply(f"✅ Code recoded! Task ID: {task_info['id']}\nSay 'integrate it' to move to plugins.")
 
 
 async def handle_integrate_intent(client, message, metadata):
@@ -74,7 +111,7 @@ async def handle_conversation(client, message, user_text):
     memory = get_chat_memory(message.from_user.id)
     memory.append({"role": "user", "content": user_text})
 
-    response = jarvis_engine.generate_conversation_response(user_text)
+    response = jarvis_engine.generate_conversation_response(user_text, memory)
 
     memory.append({"role": "assistant", "content": response})
     save_chat_memory(message.from_user.id, memory)
