@@ -1,6 +1,7 @@
 from pyrogram import filters
 from pyrogram.enums import ParseMode
-from core.role_manager import is_owner, is_dev, access_mode. get_current_mode
+from core.role_manager import is_owner, is_dev, access_mode, get_current_mode4
+from modules.regression_checker import regression_checker
 import os
 from core.task_manager import diff_file, restore_file
 from memory.memory_manager import revert_task
@@ -384,4 +385,60 @@ def register_commands(bot):
         from memory.conversation_manager import save_chat_memory
         save_chat_memory(message.from_user.id, [])
         await message.reply("✅ Chat history cleared!")
+
+    @bot.on_message(filters.command("check") & filters.private)
+    async def check_code(client, message):
+        if not is_dev(message.from_user.id):
+            await message.reply("❌ Dev access required")
+            return
         
+        # Get file path from command
+        parts = message.text.split()
+        if len(parts) < 2:
+            await message.reply("Usage: /check <file_path>")
+            return
+        
+        file_path = parts[1]
+        if not os.path.exists(file_path):
+            await message.reply("❌ File not found")
+            return
+        
+        result = regression_checker.comprehensive_check(file_path)
+        
+        report = f"📊 **Quality Report**\n"
+        report += f"Score: {result.score}/100\n"
+        report += f"Status: {'✅ PASSED' if result.passed else '❌ FAILED'}\n\n"
+        
+        if result.errors:
+            report += "🔴 **Errors:**\n"
+            for error in result.errors[:5]:  # Limit to 5
+                report += f"• {error}\n"
+        
+        if result.warnings:
+            report += "\n🟡 **Warnings:**\n"
+            for warning in result.warnings[:3]:
+                report += f"• {warning}\n"
+        
+        await message.reply(report)
+    
+    @bot.on_message(filters.command("autofix") & filters.private)
+    async def auto_fix_code(client, message):
+        if not is_dev(message.from_user.id):
+            await message.reply("❌ Dev access required")
+            return
+        
+        parts = message.text.split()
+        if len(parts) < 2:
+            await message.reply("Usage: /autofix <file_path>")
+            return
+        
+        file_path = parts[1]
+        if not os.path.exists(file_path):
+            await message.reply("❌ File not found")
+            return
+        
+        if regression_checker.auto_fix(file_path):
+            await message.reply("✅ Auto-fix applied! Run /check to verify.")
+        else:
+            await message.reply("❌ Auto-fix failed or no fixes available")
+            
