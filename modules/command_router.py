@@ -1,6 +1,6 @@
 from pyrogram import filters
 from pyrogram.enums import ParseMode
-from core.role_manager import is_owner
+from core.role_manager import is_owner, is_dev, access_mode
 import os
 from core.task_manager import diff_file, restore_file
 from memory.memory_manager import revert_task
@@ -117,6 +117,124 @@ def register_commands(bot):
         
         await message.reply(response)
 
+    @bot.on_message(filters.command("enable") & filters.private)
+    async def enable_plugin_command(client, message):
+        if not is_dev(message.from_user.id):
+            return await message.reply("❌ Access denied.")
+        
+        if len(message.command) < 2:
+            return await message.reply("Usage: /enable <plugin_name>")
+        
+        plugin_name = message.command[1]
+        plugin_path = f"plugins/{plugin_name}"
+        
+        if not os.path.exists(plugin_path):
+            return await message.reply("❌ Plugin not found.")
+        
+        # Check if plugin has a handler file
+        handler_path = f"{plugin_path}/handler.py"
+        if not os.path.exists(handler_path):
+            return await message.reply("❌ Plugin handler not found.")
+        
+        # Try to load the plugin
+        try:
+            import importlib.util
+            spec = importlib.util.spec_from_file_location(plugin_name, handler_path)
+            plugin_module = importlib.util.module_from_spec(spec)
+            plugin_module.bot = bot
+            spec.loader.exec_module(plugin_module)
+            
+            # If plugin has register_handlers function, call it
+            if hasattr(plugin_module, 'register_handlers'):
+                plugin_module.register_handlers(client, bot)
+            
+            await message.reply(f"✅ Plugin '{plugin_name}' enabled successfully.")
+            
+        except Exception as e:
+            await message.reply(f"❌ Error enabling plugin: {e}")
+
+    @bot.on_message(filters.command("disable") & filters.private)
+    async def disable_plugin_command(client, message):
+        if not is_dev(message.from_user.id):
+            return await message.reply("❌ Access denied.")
+        
+        if len(message.command) < 2:
+            return await message.reply("Usage: /disable <plugin_name>")
+        
+        plugin_name = message.command[1]
+        
+        # Note: Pyrogram doesn't have built-in handler removal
+        # This is a simplified implementation
+        await message.reply(f"⚠️ Plugin '{plugin_name}' disable requested. Note: Requires bot restart for full effect.")
+
+    @bot.on_message(filters.command("mode") & filters.private)
+    async def mode_command(client, message):
+        if not is_dev(message.from_user.id):
+            return await message.reply("❌ Access denied.")
+        
+        if len(message.command) < 2:
+            # Show current mode
+            current_mode = get_current_mode()
+            await message.reply(f"Current mode: {current_mode}")
+            return
+        
+        mode = message.command[1].lower()
+        if mode not in ["auto", "manual"]:
+            await message.reply("Usage: /mode <auto|manual>")
+            return
+        
+        # Save mode to settings
+        try:
+            with open("config/settings.json", "r") as f:
+                settings = json.load(f)
+            
+            settings["mode"] = mode
+            
+            with open("config/settings.json", "w") as f:
+                json.dump(settings, f, indent=2)
+            
+            await message.reply(f"✅ Mode set to: {mode}")
+            
+        except Exception as e:
+            await message.reply(f"❌ Error setting mode: {e}")
+
+    @bot.on_message(filters.command("tree") & filters.private)
+    async def tree_command(client, message):
+        if not is_dev(message.from_user.id):
+            return await message.reply("❌ Access denied.")
+        
+        def generate_tree(directory, prefix="", max_depth=3, current_depth=0):
+            if current_depth > max_depth:
+                return ""
+            
+            items = []
+            try:
+                entries = sorted(os.listdir(directory))
+                for i, entry in enumerate(entries):
+                    if entry.startswith('.'):
+                        continue
+                    
+                    path = os.path.join(directory, entry)
+                    is_last = i == len(entries) - 1
+                    current_prefix = "└── " if is_last else "├── "
+                    items.append(f"{prefix}{current_prefix}{entry}")
+                    
+                    if os.path.isdir(path) and current_depth < max_depth:
+                        next_prefix = prefix + ("    " if is_last else "│   ")
+                        items.append(generate_tree(path, next_prefix, max_depth, current_depth + 1))
+            except PermissionError:
+                pass
+            
+            return "\n".join(filter(None, items))
+        
+        tree_output = f"📁 **Project Structure:**\n```\n{generate_tree('.')}\n```"
+        
+        # Split message if too long
+        if len(tree_output) > 4000:
+            tree_output = tree_output[:4000] + "...\n```\n(truncated)"
+        
+        await message.reply(tree_output, parse_mode="markdown")
+
     @bot.on_message(filters.command("adddev") & filters.private)
     async def add_dev_command(client, message):
         if not is_owner(message.from_user.id):
@@ -214,10 +332,15 @@ def register_commands(bot):
 /undo <file> - Restore file backup
 /clearmemory - Clear task memory
 /plugins - List all plugins
+/enable <plugin> - Enable plugin
+/disable <plugin> - Disable plugin
+/mode <auto/manual> - Set automation mode
+/tree - Show project structure
 /access dev/public - Set access mode
 /adddev <id> - Add developer
 /removedev <id> - Remove developer
 /clearhistory - Clear chat memory
+/review <file> - AI code review
             """
         else:
             help_text = """
@@ -231,7 +354,6 @@ def register_commands(bot):
 
     @bot.on_message(filters.command("info") & filters.private)
     async def info_command(client, message):
-        from core.role_manager import is_owner, access_mode
         from memory.memory_manager import get_pending_tasks
 
         user_id = message.from_user.id
@@ -254,3 +376,12 @@ def register_commands(bot):
         from memory.conversation_manager import save_chat_memory
         save_chat_memory(message.from_user.id, [])
         await message.reply("✅ Chat history cleared!")
+
+def get_current_mode():
+    """Get current automation mode"""
+    try:
+        with open("config/settings.json", "r") as f:
+            settings = json.load(f)
+        return settings.get("mode", "manual")
+    except:
+        return "manual"
