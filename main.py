@@ -9,6 +9,8 @@ from core.sandbox_manager import sandbox_manager
 from memory.access_control import has_access
 from memory.memory_manager import get_pending_tasks
 import os
+from core.role_manager import is_dev
+import json
 
 bot = Client("JarvisBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 set_bot_instance(bot)
