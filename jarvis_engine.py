@@ -2,8 +2,11 @@ import google.generativeai as genai
 import os
 import json
 import logging
+import time
+from datetime import datetime
 from typing import Dict, Any, Optional
 from modules.file_manager import clean_code_blocks
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -164,7 +167,7 @@ class JarvisEngine:
         """Log AI interactions"""
         
         log_entry = {
-            "timestamp": str(pd.Timestamp.now()),
+            "timestamp": datetime.now().isoformat(),
             "prompt": prompt,
             "response": response[:500] + "..." if len(response) > 500 else response,
             "task_type": task_type
