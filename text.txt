@@ -1,0 +1,273 @@
+## 🧠 Full Prompt for Building JARVIS — Self-Evolving AI Telegram Bot
+
+---
+
+**You are an AI responsible for building a powerful, self-editing, self-evolving Telegram bot named `JARVIS`.**
+The bot must handle AI prompts, generate working features, track memory, simulate intent, and distinguish between users based on access level.
+
+---
+
+## 🔰 OBJECTIVE
+
+Create **JARVIS**, a Telegram bot that:
+
+* Acts as an intelligent chatbot for general users
+* Enables **Dev** and **Owner** roles to:
+
+  * Build & test features in a sandbox
+  * Confirm and integrate features into the bot
+  * Track every AI task and allow undo, revert, diff
+* Understands ambiguous intent (e.g., “help me build...”) and asks for confirmation
+* Logs, secures, and evolves its own file system with task traceability
+
+---
+
+## ✅ CORE FEATURES
+
+### 🎯 General Behavior
+
+* Natural language prompts are the default interface
+* All user messages go through intent classification
+* AI responses are generated using Gemini Flash 2.5 or similar
+* All AI code responses must be:
+
+  * **Pure JSON only**
+  * **No markdown or formatting**
+  * **No explanations or examples**
+
+> ⚠️ Examples mentioned in this prompt are only for understanding. The AI must output only clean, working code — no sample, no chat, no formatting.
+
+---
+
+## 🧠 INTENT SYSTEM
+
+### Intent Types
+
+| Prompt Type                          | Behavior                                        |
+| ------------------------------------ | ----------------------------------------------- |
+| `"build a rps game"`                 | → Generate code → sandbox it                    |
+| `"how to make a rps game?"`          | → Explain it, no code generated                 |
+| `"can you help me make a rps game?"` | → Ask: “Create or explain?”                     |
+| `"integrate it"`                     | → Use memory to know which feature to integrate |
+| `"add it to the bot"`                | → Same as above                                 |
+| `"what is your name?"` (Public)      | → Just a conversation — no code, no sandboxing  |
+
+### Role-aware Clarification
+
+* Public users get **AI chatbot answers only**
+* Devs/Owners get asked for clarification when prompts are ambiguous
+* Even Devs may want to *learn*, not *build* — don’t assume every prompt means code
+
+---
+
+## 🔐 ROLE SYSTEM
+
+| Role   | Permissions                                                                 |
+| ------ | --------------------------------------------------------------------------- |
+| Owner  | Full access. Add/remove Devs, control mode, use all AI functions            |
+| Dev    | Can generate features, use AI tools, sandbox & integrate, run `/undo`, etc. |
+| Public | Only gets standard AI answers — no file access, no integrations             |
+
+Role data is stored in `config/settings.json`.
+
+---
+
+## 📦 SANDBOX + INTEGRATION FLOW
+
+1. **Dev** sends: `"build me a rps game"`
+2. JARVIS simulates intent → valid → AI generates code
+3. Code is stored in `sandbox/rps/handler.py` (not plugins yet)
+4. Dev tests it (e.g. via `/rps`)
+5. Dev says: `"integrate it"` or `"confirm"`
+6. JARVIS:
+
+   * Uses memory to detect pending task
+   * Moves files → `plugins/rps/`
+   * Logs action
+   * Clears/updates memory
+
+---
+
+## 🧠 MEMORY SYSTEM
+
+### Task Memory (`logs/memory.json`)
+
+* Tracks task ID, prompt, chat\_id, files, status
+* Used for:
+
+  * `/undo task 17`
+  * `/review task 17`
+  * Confirmation matching (“integrate it” → Task\_17)
+
+### Chat Memory (`logs/conversations/<chat_id>.json`)
+
+* Natural conversation memory per user
+* Used to maintain chat context (like ChatGPT)
+* Can be cleared via `/clearhistory`
+
+---
+
+## 📁 FILE SYSTEM BEHAVIOR
+
+### Automatic File Handling
+
+* Every generated file is saved directly (no user intervention)
+* Existing files are backed up as `.bak`
+* Integration moves files from `sandbox/` to `plugins/`
+
+### Diff & Undo Support
+
+* `/diff <file>` → compares current file to `.bak`
+* `/undo <file>` → restores `.bak`
+* `/undo task <id>` → reverts full task
+
+---
+
+## 🔌 PLUGIN SYSTEM
+
+* Plugins live in `plugins/<name>/handler.py`
+* Must register via `register_handlers(app, bot)`
+* Plugins can be enabled/disabled dynamically
+* All integrated plugins must be traceable to a `Task_ID` if AI-generated
+
+---
+
+## 🔄 SELF-EVOLVING INTELLIGENCE
+
+| Feature                | Behavior                                                             |
+| ---------------------- | -------------------------------------------------------------------- |
+| 🧠 Intent Simulation   | Classifies user intent, asks clarification if needed                 |
+| 🧪 Regression Checking | After file edits, runs syntax check / tests, auto-reverts on failure |
+| 🔁 Self-debugging      | Captures tracebacks and uses LLM to try patches                      |
+| 🧩 Plugin traceability | Every plugin built via AI is tagged in memory/logs                   |
+| 🧠 Autonomous Mode     | Reformat, clean, optimize automatically if in `auto` mode            |
+
+---
+
+## 📡 LOGGING SYSTEM
+
+* `logs/ai_activity.log`: All AI prompts/responses
+* `logs/memory.json`: All AI tasks
+* `logs/conversations/`: Natural language chat history per user
+* `logs/memory_backup_*.json`: Periodic memory snapshots for rollback
+* `task_channel`: Every AI task is logged here with ID + file list
+* `log_channel`: Logs every user interaction + lifecycle events
+
+---
+
+## 📋 BASIC COMMANDS (NOW INCLUDED ✅)
+
+| Command         | Access | Purpose                                         |
+| --------------- | ------ | ----------------------------------------------- |
+| `/start`        | All    | Welcome message, describes JARVIS features      |
+| `/help`         | All    | Lists commands relevant to user’s role          |
+| `/info`         | All    | Shows current mode, plugin count, and user role |
+| `/tree`         | All    | Sends full project folder layout                |
+| `/clearhistory` | All    | Clears chat memory for that user only           |
+
+These are **not generated by AI**, but **hardcoded** inside `command_router.py` or `main.py`.
+
+---
+
+## 🧰 ADVANCED DEV COMMANDS
+
+| Command              | Role  | Description                                       |
+| -------------------- | ----- | ------------------------------------------------- |
+| `/memory`            | Dev   | Shows last 10 AI tasks                            |
+| `/clearmemory`       | Dev   | Deletes memory.json                               |
+| `/diff <file>`       | Dev   | Shows changes compared to last backup             |
+| `/undo <file>`       | Dev   | Restores previous version                         |
+| `/undo task <id>`    | Dev   | Reverts all file changes made in a task           |
+| `/enable <plugin>`   | Dev   | Enables plugin by name                            |
+| `/disable <plugin>`  | Dev   | Disables plugin                                   |
+| `/plugins`           | Dev   | Lists all plugins and whether enabled             |
+| `/review <file>`     | Dev   | Sends file to LLM for code review + suggestions   |
+| `/mode auto/manual`  | Dev   | Switches autonomous reformatting mode             |
+| `/adddev <id>`       | Owner | Adds a developer                                  |
+| `/removedev <id>`    | Owner | Removes a developer                               |
+| `/access dev/public` | Owner | Toggles whether bot is in dev-only or public mode |
+
+---
+
+## 🧠 AI MODEL RULES
+
+* Must use only the following output format:
+
+```json
+{
+  "files": {
+    "sandbox/rps/handler.py": "import ...\ndef ...",
+    "sandbox/rps/utils.py": "..."
+  }
+}
+```
+
+* Must **not include markdown**
+* Must **not include explanations**
+* Must **not include code examples**
+
+> ⚠️ Any examples in this prompt are for understanding only.
+
+---
+
+## 📁 FOLDER STRUCTURE
+
+```
+jarvis_bot/
+├── core/                          # Orchestration + AI intent routing
+│   ├── ai_engine.py
+│   ├── task_manager.py
+│   ├── sandbox_manager.py
+│   ├── intent_classifier.py
+│   └── role_manager.py
+│
+├── modules/                       # Functional logic (non-AI)
+│   ├── command_router.py          # Registers all Telegram commands
+│   ├── file_manager.py            # Diff, undo, backups
+│   ├── plugin_loader.py
+│   └── regression_checker.py
+│
+├── memory/                        # Memory layers
+│   ├── memory_manager.py          # Task memory & traceability
+│   ├── conversation_manager.py    # Per-user conversation memory
+│   └── access_control.py          # Dev/Owner/Public validation
+│
+├── plugins/                       # Confirmed AI features
+│   └── rps/handler.py
+│
+├── sandbox/                       # Temporary AI-generated features
+│   └── rps/handler.py
+│
+├── logs/
+│   ├── memory.json
+│   ├── ai_activity.log
+│   ├── memory_backup_*.json
+│   └── conversations/<chat_id>.json
+│
+├── uploads/                       # Uploaded .txt prompts
+├── db/                            # Plugin data (e.g., todo.json)
+├── config/
+│   └── settings.json              # Role list, mode, etc.
+├── main.py                        # Telegram bot entry point
+├── jarvis_engine.py               # AI model selector + LLM interface
+├── error_handler.py
+├── requirements.txt
+├── .env
+└── README.md
+```
+
+---
+
+## ✅ SUMMARY
+
+JARVIS is a full-stack self-evolving Telegram AI assistant that:
+
+* Accepts natural language prompts
+* Differentiates user roles
+* Classifies intent
+* Builds features in sandbox
+* Integrates only when confirmed
+* Tracks every change
+* Can rollback, review, or fix itself
+
+---

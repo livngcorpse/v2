@@ -1,0 +1,6 @@
+{
+  "mode": "dev", 
+  "owner_id": 1234567,
+  "devs": [1234567],
+  "access": "public"
+}
