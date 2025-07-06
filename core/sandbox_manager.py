@@ -5,7 +5,7 @@ import time
 from typing import Dict, List, Any, Optional
 from core.task_manager import backup_file
 from memory.memory_manager import log_task, get_task_by_id
-from modules.regression_checker import lint_code
+from modules.regression_checker import regression_checker
 from error_handler import capture_exception
 
 class SandboxManager:
@@ -56,12 +56,13 @@ class SandboxManager:
                 
                 task_info["files"].append(full_path)
                 
-                # Run syntax check
-                lint_result = lint_code(full_path)
-                if lint_result.strip():
+                # Run regression checker
+                check_result = regression_checker.comprehensive_check(full_path)
+                if not check_result.passed:
                     task_info["errors"].append({
                         "file": file_path,
-                        "lint_errors": lint_result
+                        "message": f"Quality check failed (Score: {check_result.score}/100)",
+                        "details": check_result.errors + check_result.warnings
                     })
             
             # Log the task
@@ -76,6 +77,7 @@ class SandboxManager:
                 "message": error_msg
             })
             return task_info
+
     
     def test_sandbox_feature(self, task_id: int) -> Dict[str, Any]:
         """
